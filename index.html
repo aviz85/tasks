@@ -11,14 +11,12 @@
     <div class="container">
         <header>
             <h1>ניהול משימות</h1>
-            <form id="task-form">
-                <div class="input-group">
-                    <input type="text" id="task-input" placeholder="הוסף משימה חדשה..." required>
-                    <button type="submit" class="add-btn">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </form>
+            <div class="input-group">
+                <input type="text" id="task-input" placeholder="הוסף משימה חדשה..." required>
+                <button type="button" id="add-task-btn" class="add-btn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
         </header>
 
         <main>
@@ -38,6 +36,7 @@
             </div>
         </main>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html> 

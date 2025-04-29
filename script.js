@@ -1,72 +1,156 @@
+// Initialize Supabase client
+const supabaseUrl = 'https://cmehmlfpysyyxdocwtex.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtZWhtbGZweXN5eXhkb2N3dGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4OTY5MTYsImV4cCI6MjA2MTQ3MjkxNn0.YAVH39c0hqB_jBIMeXzNi-G05jO7pEWkCTqW5hbWtqI';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 class TodoApp {
     constructor() {
-        this.tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        this.tasks = [];
         this.currentFilter = 'all';
         
         // DOM Elements
-        this.taskForm = document.getElementById('task-form');
         this.taskInput = document.getElementById('task-input');
+        this.addTaskBtn = document.getElementById('add-task-btn');
         this.taskList = document.getElementById('task-list');
         this.tasksCounter = document.getElementById('tasks-counter');
         this.filterButtons = document.querySelectorAll('.filter-btn');
         this.clearCompletedBtn = document.getElementById('clear-completed');
 
-        // Bind event listeners
-        this.taskForm.addEventListener('submit', this.addTask.bind(this));
+        // Bind event listeners with console logs for debugging
+        this.addTaskBtn.addEventListener('click', () => {
+            console.log('Add button clicked');
+            this.addTask();
+        });
+        
+        this.taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('Enter pressed');
+                e.preventDefault();
+                this.addTask();
+            }
+        });
+        
         this.taskList.addEventListener('click', this.handleTaskClick.bind(this));
         this.filterButtons.forEach(btn => {
             btn.addEventListener('click', this.handleFilter.bind(this));
         });
         this.clearCompletedBtn.addEventListener('click', this.clearCompleted.bind(this));
 
-        // Initial render
-        this.renderTasks();
+        // Initial load
+        this.loadTasks();
+        console.log('TodoApp initialized');
     }
 
-    saveToLocalStorage() {
-        localStorage.setItem('tasks', JSON.stringify(this.tasks));
+    async loadTasks() {
+        try {
+            console.log('Loading tasks...');
+            const { data, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            
+            this.tasks = data || [];
+            this.renderTasks();
+            console.log('Tasks loaded:', this.tasks.length);
+        } catch (error) {
+            console.error('Error loading tasks:', error);
+            alert('שגיאה בטעינת המשימות. נסה לרענן את הדף.');
+        }
     }
 
-    addTask(e) {
-        e.preventDefault();
+    async addTask() {
+        console.log('Adding new task...');
         const taskText = this.taskInput.value.trim();
+        if (!taskText) {
+            console.log('Task text is empty');
+            return;
+        }
         
-        if (taskText) {
+        try {
             const newTask = {
                 id: Date.now(),
                 text: taskText,
                 completed: false,
-                createdAt: new Date()
+                created_at: new Date().toISOString()
             };
 
-            this.tasks.unshift(newTask);
-            this.saveToLocalStorage();
+            console.log('Sending task to Supabase:', newTask);
+            const { data, error } = await supabase
+                .from('tasks')
+                .insert([newTask])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            console.log('Task added successfully:', data);
+            this.tasks.unshift(data);
             this.renderTasks();
             this.taskInput.value = '';
+        } catch (error) {
+            console.error('Error adding task:', error);
+            alert('שגיאה בהוספת המשימה. נסה שוב.');
         }
     }
 
-    deleteTask(taskId) {
-        this.tasks = this.tasks.filter(task => task.id !== taskId);
-        this.saveToLocalStorage();
-        this.renderTasks();
+    async deleteTask(taskId) {
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .delete()
+                .eq('id', taskId);
+
+            if (error) throw error;
+
+            this.tasks = this.tasks.filter(task => task.id !== taskId);
+            this.renderTasks();
+        } catch (error) {
+            console.error('Error deleting task:', error);
+        }
     }
 
-    toggleTask(taskId) {
-        this.tasks = this.tasks.map(task => {
-            if (task.id === taskId) {
-                return { ...task, completed: !task.completed };
-            }
-            return task;
-        });
-        this.saveToLocalStorage();
-        this.renderTasks();
+    async toggleTask(taskId) {
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        const newStatus = !task.completed;
+
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .update({ completed: newStatus })
+                .eq('id', taskId);
+
+            if (error) throw error;
+
+            this.tasks = this.tasks.map(task => {
+                if (task.id === taskId) {
+                    return { ...task, completed: newStatus };
+                }
+                return task;
+            });
+            this.renderTasks();
+        } catch (error) {
+            console.error('Error updating task:', error);
+        }
     }
 
-    clearCompleted() {
-        this.tasks = this.tasks.filter(task => !task.completed);
-        this.saveToLocalStorage();
-        this.renderTasks();
+    async clearCompleted() {
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .delete()
+                .eq('completed', true);
+
+            if (error) throw error;
+
+            this.tasks = this.tasks.filter(task => !task.completed);
+            this.renderTasks();
+        } catch (error) {
+            console.error('Error clearing completed tasks:', error);
+        }
     }
 
     handleTaskClick(e) {
