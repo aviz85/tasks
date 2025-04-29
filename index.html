@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול משימות</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ניהול משימות</h1>
+            <form id="task-form">
+                <div class="input-group">
+                    <input type="text" id="task-input" placeholder="הוסף משימה חדשה..." required>
+                    <button type="submit" class="add-btn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </form>
+        </header>
+
+        <main>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">הכל</button>
+                <button class="filter-btn" data-filter="active">פעיל</button>
+                <button class="filter-btn" data-filter="completed">הושלם</button>
+            </div>
+
+            <ul id="task-list" class="task-list">
+                <!-- Tasks will be added here dynamically -->
+            </ul>
+
+            <div class="list-footer">
+                <span id="tasks-counter">0 משימות נותרו</span>
+                <button id="clear-completed" class="clear-btn">נקה משימות שהושלמו</button>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
